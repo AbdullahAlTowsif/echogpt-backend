@@ -1,0 +1,185 @@
+// use prisma-8
+
+enum RoleName {
+  @@type("pg/text@1")
+  ADMIN = "ADMIN"
+  USER = "USER"
+}
+
+enum SubscriptionPlan {
+  @@type("pg/text@1")
+  FREE = "FREE"
+  PREMIUM = "PREMIUM"
+}
+
+enum SubscriptionStatus {
+  @@type("pg/text@1")
+  ACTIVE = "ACTIVE"
+  CANCELED = "CANCELED"
+  EXPIRED = "EXPIRED"
+  PAST_DUE = "PAST_DUE"
+}
+
+enum AiProviderType {
+  @@type("pg/text@1")
+  OPENAI = "OPENAI"
+  CLAUDE = "CLAUDE"
+  GEMINI = "GEMINI"
+}
+
+enum ChatMessageRole {
+  @@type("pg/text@1")
+  USER = "USER"
+  ASSISTANT = "ASSISTANT"
+  SYSTEM = "SYSTEM"
+}
+
+model Role {
+  id    Uuid     @id @default(uuid())
+  name  RoleName @unique
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id                     Uuid    @id @default(uuid())
+  email                  String  @unique
+  passwordHash           String  @map("password_hash")
+  firstName              String? @map("first_name")
+  lastName               String? @map("last_name")
+  isEmailVerified        Boolean @default(false) @map("is_email_verified")
+  emailVerificationToken String? @map("email_verification_token")
+  isActive               Boolean @default(true) @map("is_active")
+
+  roleId Uuid @map("role_id")
+  role   Role @relation(fields: [roleId], references: [id])
+
+  sessions      Session[]
+  subscriptions Subscription[]
+  aiProviders   AiProvider[]
+  conversations Conversation[]
+  webSearches   WebSearch[]
+  apiUsageLogs  ApiUsageLog[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt temporal.updatedAt() @map("updated_at")
+
+  @@index([email])
+  @@map("users")
+}
+
+model Session {
+  id               Uuid               @id @default(uuid())
+  userId           Uuid               @map("user_id")
+  user             User               @relation(fields: [userId], references: [id])
+  refreshTokenHash String             @map("refresh_token_hash")
+  userAgent        String?            @map("user_agent")
+  ipAddress        String?            @map("ip_address")
+  expiresAt        DateTime  @map("expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Subscription {
+  id           Uuid               @id @default(uuid())
+  userId       Uuid               @map("user_id")
+  user         User               @relation(fields: [userId], references: [id])
+  plan         SubscriptionPlan   @default(FREE)
+  status       SubscriptionStatus @default(ACTIVE)
+  requestLimit Int                @default(50) @map("request_limit")
+  requestsUsed Int                @default(0) @map("requests_used")
+  startDate    DateTime  @default(now()) @map("start_date")
+  endDate      DateTime? @map("end_date")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt  temporal.updatedAt() @map("updated_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model AiProvider {
+  id                Uuid               @id @default(uuid())
+  userId            Uuid               @map("user_id")
+  user              User               @relation(fields: [userId], references: [id])
+  type              AiProviderType
+  label             String?
+  apiKeyEncrypted   String             @map("api_key_encrypted")
+  isEnabled         Boolean            @default(true) @map("is_enabled")
+  isDefault         Boolean            @default(false) @map("is_default")
+  lastHealthStatus  String?            @map("last_health_status")
+  lastHealthCheckAt DateTime? @map("last_health_check_at")
+
+  conversations Conversation[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt temporal.updatedAt() @map("updated_at")
+
+  @@index([userId])
+  @@index([userId, type])
+  @@map("ai_providers")
+}
+
+model Conversation {
+  id           Uuid        @id @default(uuid())
+  userId       Uuid        @map("user_id")
+  user         User        @relation(fields: [userId], references: [id])
+  aiProviderId Uuid?       @map("ai_provider_id")
+  aiProvider   AiProvider? @relation(fields: [aiProviderId], references: [id])
+  title        String?
+
+  messages ChatMessage[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt temporal.updatedAt() @map("updated_at")
+
+  @@index([userId])
+  @@map("conversations")
+}
+
+model ChatMessage {
+  id             Uuid              @id @default(uuid())
+  conversationId Uuid              @map("conversation_id")
+  conversation   Conversation      @relation(fields: [conversationId], references: [id])
+  role           ChatMessageRole
+  content        String
+  tokensUsed     Int?              @map("tokens_used")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([conversationId])
+  @@map("chat_messages")
+}
+
+model WebSearch {
+  id          Uuid              @id @default(uuid())
+  userId      Uuid              @map("user_id")
+  user        User              @relation(fields: [userId], references: [id])
+  query       String
+  resultsJson Json?             @map("results_json")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([query])
+  @@map("web_searches")
+}
+
+model ApiUsageLog {
+  id         Uuid              @id @default(uuid())
+  userId     Uuid?             @map("user_id")
+  user       User?             @relation(fields: [userId], references: [id])
+  endpoint   String
+  method     String
+  statusCode Int               @map("status_code")
+  provider   AiProviderType?
+  tokensUsed Int?              @map("tokens_used")
+  durationMs Int?              @map("duration_ms")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("api_usage_logs")
+}
