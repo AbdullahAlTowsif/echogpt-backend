@@ -15,6 +15,7 @@ import { AuthService } from './modules/auth/auth.service.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { UsersController } from './modules/users/users.controller.js';
 import { UsersService } from './modules/users/users.service.js';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module.js';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { UsersService } from './modules/users/users.service.js';
     HealthModule,
     AuthModule,
     UsersModule,
+    SubscriptionsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
