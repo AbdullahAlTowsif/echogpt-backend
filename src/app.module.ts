@@ -16,6 +16,7 @@ import { UsersModule } from './modules/users/users.module.js';
 import { UsersController } from './modules/users/users.controller.js';
 import { UsersService } from './modules/users/users.service.js';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module.js';
+import { AiProvidersModule } from './modules/ai-providers/ai-providers.module.js';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
     AuthModule,
     UsersModule,
     SubscriptionsModule,
+    AiProvidersModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
