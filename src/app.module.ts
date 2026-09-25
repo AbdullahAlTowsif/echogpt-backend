@@ -9,6 +9,9 @@ import { DatabaseModule } from './database/database.module.js';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter.js';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
+import { AuthController } from './modules/auth/auth.controller.js';
+import { AuthService } from './modules/auth/auth.service.js';
 
 @Module({
   imports: [
@@ -38,11 +41,14 @@ import { HealthModule } from './modules/health/health.module.js';
     }),
     DatabaseModule,
     HealthModule,
+    AuthModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    AuthService,
   ],
+  controllers: [AuthController],
 })
 export class AppModule { }
