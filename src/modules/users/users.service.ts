@@ -36,7 +36,25 @@ export class UsersService {
   }
 
   async deleteAccount(userId: string) {
+    await this.prisma.db.orm.public.Session.where({ userId }).deleteAll();
+    await this.prisma.db.orm.public.Subscription.where({ userId }).deleteAll();
+    await this.prisma.db.orm.public.ApiUsageLog.where({ userId }).deleteAll();
+    await this.prisma.db.orm.public.WebSearch.where({ userId }).deleteAll();
+
+    const conversations = await this.prisma.db.orm.public.Conversation
+      .where({ userId })
+      .all();
+
+    for (const conv of conversations) {
+      await this.prisma.db.orm.public.ChatMessage
+        .where({ conversationId: conv.id })
+        .deleteAll();
+    }
+
+    await this.prisma.db.orm.public.Conversation.where({ userId }).deleteAll();
+    await this.prisma.db.orm.public.AiProvider.where({ userId }).deleteAll();
     await this.prisma.db.orm.public.User.where({ id: userId }).delete();
+
     return { message: 'Account deleted' };
   }
 }

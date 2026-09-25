@@ -1325,6 +1325,7 @@
               },
               "foreignKeys": [
                 {
+                  "onDelete": "cascade",
                   "source": {
                     "columns": [
                       "user_id"
@@ -1434,6 +1435,7 @@
               },
               "foreignKeys": [
                 {
+                  "onDelete": "setNull",
                   "source": {
                     "columns": [
                       "user_id"
@@ -1527,6 +1529,7 @@
               },
               "foreignKeys": [
                 {
+                  "onDelete": "cascade",
                   "source": {
                     "columns": [
                       "conversation_id"
@@ -1599,6 +1602,7 @@
               },
               "foreignKeys": [
                 {
+                  "onDelete": "cascade",
                   "source": {
                     "columns": [
                       "user_id"
@@ -1615,6 +1619,7 @@
                   }
                 },
                 {
+                  "onDelete": "setNull",
                   "source": {
                     "columns": [
                       "ai_provider_id"
@@ -1746,6 +1751,7 @@
               },
               "foreignKeys": [
                 {
+                  "onDelete": "cascade",
                   "source": {
                     "columns": [
                       "user_id"
@@ -1882,6 +1888,7 @@
               },
               "foreignKeys": [
                 {
+                  "onDelete": "cascade",
                   "source": {
                     "columns": [
                       "user_id"
@@ -2076,6 +2083,7 @@
               },
               "foreignKeys": [
                 {
+                  "onDelete": "cascade",
                   "source": {
                     "columns": [
                       "user_id"
@@ -2164,7 +2172,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "823f11ff45d680e315afd9e3cf7ee915b1f7d52f0b0009d05464efe472498639"
+    "storageHash": "2a790a5abfe816017ace74f3de0b034d3b06eb472ae4cd58a1575166331c2f51"
   },
   "execution": {
     "executionHash": "5f708a0560238acd84fca533c3a0320d35847f689860aab3924ecb56904403c4",
