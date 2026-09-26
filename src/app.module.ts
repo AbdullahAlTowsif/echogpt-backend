@@ -18,6 +18,7 @@ import { UsersService } from './modules/users/users.service.js';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module.js';
 import { AiProvidersModule } from './modules/ai-providers/ai-providers.module.js';
 import { ChatModule } from './modules/chat/chat.module.js';
+import { SearchModule } from './modules/search/search.module.js';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { ChatModule } from './modules/chat/chat.module.js';
     SubscriptionsModule,
     AiProvidersModule,
     ChatModule,
+    SearchModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
