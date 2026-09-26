@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { SearchQueryDto } from './dto/search-query.dto.js';
 
-const CACHE_WINDOW_MS = 15 * 60 * 1000;
+const CACHE_WINDOW_MS = 10 * 60 * 1000;
 
 type SearchResultsJson = {
     abstract: string | null;
@@ -24,16 +24,25 @@ export class SearchService {
             .first();
 
         if (cached && this.isFresh(cached.createdAt)) {
-            return { query: dto.query, cached: true, results: cached.resultsJson };
+            const r = cached.resultsJson as SearchResultsJson | null;
+            if (r?.abstract || (r?.relatedTopics?.length ?? 0) > 0) {
+                return { query: dto.query, cached: true, results: cached.resultsJson };
+            }
         }
 
         const results = await this.fetchResults(dto.query);
 
-        await this.prisma.db.orm.public.WebSearch.create({
-            userId,
-            query: dto.query,
-            resultsJson: results,
-        });
+        const isUseful =
+            results.abstract != null ||
+            (results.relatedTopics?.length ?? 0) > 0;
+
+        if (isUseful) {
+            await this.prisma.db.orm.public.WebSearch.create({
+                userId,
+                query: dto.query,
+                resultsJson: results,
+            });
+        }
 
         return { query: dto.query, cached: false, results };
     }
@@ -65,24 +74,27 @@ export class SearchService {
     }
 
     private async fetchResults(query: string): Promise<SearchResultsJson> {
-        const response = await fetch(
-            `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`,
-        );
+        const url =
+            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
+
+        const response = await fetch(url, {
+            headers: { Accept: 'application/json', 'User-Agent': 'EchoGPT/1.0' },
+        });
+
         if (!response.ok) {
-            return { abstract: null, relatedTopics: [], note: 'Search provider unavailable' };
+            return { abstract: null, relatedTopics: [], note: 'No Wikipedia summary' };
         }
+
         const data = (await response.json()) as {
-            AbstractText?: string;
-            AbstractSource?: string;
-            RelatedTopics?: { Text?: string }[];
+            extract?: string;
+            description?: string;
+            content_urls?: { desktop?: { page?: string } };
         };
+
         return {
-            abstract: data.AbstractText || null,
-            abstractSource: data.AbstractSource || null,
-            relatedTopics: (data.RelatedTopics ?? [])
-                .slice(0, 5)
-                .map((t) => t.Text)
-                .filter((t): t is string => Boolean(t)),
+            abstract: data.extract ?? data.description ?? null,
+            abstractSource: data.content_urls?.desktop?.page ?? 'Wikipedia',
+            relatedTopics: [],
         };
     }
 }
