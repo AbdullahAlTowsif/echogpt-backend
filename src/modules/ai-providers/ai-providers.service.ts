@@ -67,6 +67,20 @@ export class AiProvidersService {
         return { message: 'Provider deleted' };
     }
 
+    /** Internal use only — never expose decrypted keys through a controller. */
+    async getDecryptedForInternalUse(userId: string, providerId?: string) {
+        const provider = providerId
+            ? await this.getOwned(userId, providerId)
+            : await this.prisma.db.orm.public.AiProvider.where({ userId, isDefault: true }).first();
+
+        if (!provider) throw new NotFoundException('No AI provider configured');
+        if (!provider.isEnabled) throw new ForbiddenException('Selected provider is disabled');
+
+        const encryptionKey = this.config.get<string>('encryptionKey')!;
+        const apiKey = decrypt(provider.apiKeyEncrypted, encryptionKey);
+        return { id: provider.id, type: provider.type, apiKey };
+    }
+
     enable(userId: string, id: string) {
         return this.update(userId, id, { isEnabled: true });
     }
